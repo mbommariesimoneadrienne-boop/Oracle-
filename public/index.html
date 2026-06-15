@@ -1,1 +1,493 @@
-temp
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>ORACLE — Expert Paris Sportifs</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#08090d;--surface:#0e1018;--surface2:#161922;--border:#1e2433;--accent:#00ff87;--accent2:#0066ff;--danger:#ff3b5c;--warn:#ffb800;--purple:#9b5de5;--text:#e8eaf0;--muted:#5a6480;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
+.header{position:sticky;top:0;z-index:100;background:rgba(8,9,13,.97);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 16px;display:flex;align-items:center;justify-content:space-between;height:56px;}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.header-right{display:flex;align-items:center;gap:10px;}
+.bankroll-badge{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent);background:rgba(0,255,135,.1);border:1px solid rgba(0,255,135,.2);border-radius:8px;padding:4px 8px;cursor:pointer;}
+.status-dot{width:8px;height:8px;background:var(--accent);border-radius:50%;box-shadow:0 0 10px var(--accent);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+.nav{position:fixed;bottom:0;left:0;right:0;z-index:100;background:rgba(8,9,13,.97);backdrop-filter:blur(20px);border-top:1px solid var(--border);display:flex;padding:8px 0 20px;}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:none;color:var(--muted);cursor:pointer;padding:8px 2px;font-family:'DM Sans',sans-serif;font-size:8px;font-weight:500;transition:color .2s;}
+.nav-btn.active{color:var(--accent);}
+.nav-btn svg{width:20px;height:20px;}
+main{padding:16px 16px 100px;}
+.screen{display:none;}
+.screen.active{display:block;animation:fadeIn .25s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px;}
+.card-title{font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:2px;color:var(--muted);margin-bottom:12px;}
+.section-title{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;margin-bottom:16px;}
+.stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;}
+.stat-box{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 8px;text-align:center;}
+.stat-val{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;color:var(--accent);line-height:1;}
+.stat-label{font-size:9px;color:var(--muted);margin-top:4px;letter-spacing:.5px;text-transform:uppercase;}
+.badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:600;font-family:'JetBrains Mono',monospace;}
+.badge-green{background:rgba(0,255,135,.12);color:var(--accent);border:1px solid rgba(0,255,135,.2);}
+.badge-yellow{background:rgba(255,184,0,.12);color:var(--warn);border:1px solid rgba(255,184,0,.2);}
+.badge-blue{background:rgba(0,102,255,.12);color:var(--accent2);border:1px solid rgba(0,102,255,.2);}
+.badge-red{background:rgba(255,59,92,.12);color:var(--danger);border:1px solid rgba(255,59,92,.2);}
+.input-field{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color .2s;resize:none;}
+.input-field:focus{border-color:var(--accent);}
+.input-field::placeholder{color:var(--muted);}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 20px;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .2s;width:100%;}
+.btn-primary{background:var(--accent);color:#000;}
+.btn-primary:active{transform:scale(.97);}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text);}
+.btn-danger{background:rgba(255,59,92,.15);border:1px solid rgba(255,59,92,.3);color:var(--danger);}
+.match-card{background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;position:relative;overflow:hidden;}
+.match-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);}
+.match-card.no-score::before{background:var(--warn);}
+.match-card.pending::before{background:var(--accent2);}
+.match-teams{font-weight:600;font-size:14px;margin-bottom:6px;}
+.score-display{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;color:var(--accent);margin-bottom:6px;}
+.odds-row{display:flex;gap:6px;margin-top:8px;}
+.odd-box{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px;text-align:center;}
+.odd-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.odd-val{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;margin-top:2px;}
+.odd-val.high{color:var(--accent);}.odd-val.mid{color:var(--warn);}.odd-val.low{color:var(--danger);}
+.chat-container{display:flex;flex-direction:column;height:calc(100vh - 160px);}
+.chat-messages{flex:1;overflow-y:auto;padding-bottom:16px;scrollbar-width:none;}
+.chat-messages::-webkit-scrollbar{display:none;}
+.msg{margin-bottom:14px;display:flex;gap:10px;align-items:flex-start;}
+.msg.user{flex-direction:row-reverse;}
+.msg-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+.msg.user .msg-avatar{background:var(--accent2);color:#fff;}
+.msg.ai .msg-avatar{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;font-family:'Bebas Neue',sans-serif;font-size:11px;}
+.msg-bubble{max-width:82%;padding:12px 14px;border-radius:16px;font-size:13px;line-height:1.6;}
+.msg.user .msg-bubble{background:var(--accent2);color:#fff;border-bottom-right-radius:4px;}
+.msg.ai .msg-bubble{background:var(--surface2);border:1px solid var(--border);border-bottom-left-radius:4px;}
+.chat-input-row{display:flex;gap:8px;align-items:flex-end;padding-top:12px;border-top:1px solid var(--border);}
+.chat-input-row textarea{flex:1;min-height:44px;max-height:120px;padding:12px 14px;border-radius:12px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;resize:none;}
+.chat-input-row textarea:focus{border-color:var(--accent);}
+.icon-btn{width:44px;height:44px;border-radius:12px;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all .2s;}
+.icon-btn.send{background:var(--accent);}
+.icon-btn.mic{background:var(--surface2);border:1px solid var(--border);color:var(--text);}
+.icon-btn.mic.listening{background:var(--danger);border-color:var(--danger);animation:micPulse .8s infinite;}
+.icon-btn.attach{background:var(--surface2);border:1px solid var(--border);color:var(--text);}
+@keyframes micPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.1);}}
+.voice-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.93);backdrop-filter:blur(20px);z-index:300;flex-direction:column;align-items:center;justify-content:center;gap:20px;}
+.voice-overlay.active{display:flex;}
+.voice-orb{width:120px;height:120px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;}
+.voice-orb.listening{animation:orbPulse 1s infinite;}
+.voice-orb.speaking{animation:orbSpeak .5s infinite alternate;}
+@keyframes orbPulse{0%,100%{transform:scale(1);box-shadow:0 0 30px rgba(0,255,135,.3);}50%{transform:scale(1.15);box-shadow:0 0 60px rgba(0,255,135,.5);}}
+@keyframes orbSpeak{from{transform:scale(1);}to{transform:scale(1.1);}}
+.voice-status{font-size:18px;font-weight:600;color:var(--text);}
+.voice-transcript{font-size:14px;color:var(--muted);text-align:center;max-width:280px;min-height:44px;}
+.voice-close{padding:12px 32px;border-radius:12px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;}
+.typing-dots{display:flex;gap:5px;padding:4px 0;}
+.typing-dots span{width:6px;height:6px;background:var(--muted);border-radius:50%;animation:dot 1.4s infinite;}
+.typing-dots span:nth-child(2){animation-delay:.2s;}
+.typing-dots span:nth-child(3){animation-delay:.4s;}
+@keyframes dot{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+.alert{border-radius:12px;padding:12px 14px;font-size:13px;margin-bottom:10px;line-height:1.5;}
+.alert-warn{background:rgba(255,184,0,.08);border:1px solid rgba(255,184,0,.2);color:var(--warn);}
+.alert-green{background:rgba(0,255,135,.08);border:1px solid rgba(0,255,135,.2);color:var(--accent);}
+.alert-red{background:rgba(255,59,92,.08);border:1px solid rgba(255,59,92,.2);color:var(--danger);}
+.alert-blue{background:rgba(0,102,255,.08);border:1px solid rgba(0,102,255,.2);color:var(--accent2);}
+.tags-scroll{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px;margin-bottom:12px;}
+.tags-scroll::-webkit-scrollbar{display:none;}
+.tag{flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface2);color:var(--muted);transition:all .2s;}
+.tag.active{background:rgba(0,255,135,.1);border-color:var(--accent);color:var(--accent);}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(10px);z-index:200;align-items:flex-end;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:24px 24px 0 0;padding:20px 16px 40px;width:100%;animation:slideUp .3s ease;max-height:92vh;overflow-y:auto;}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-handle{width:36px;height:4px;background:var(--border);border-radius:4px;margin:0 auto 20px;}
+.modal-title{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;margin-bottom:16px;}
+.predicted-score{font-family:'Bebas Neue',sans-serif;font-size:48px;letter-spacing:4px;text-align:center;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;margin:8px 0;}
+.empty-state{text-align:center;padding:40px 20px;color:var(--muted);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.form-group{margin-bottom:12px;}
+.form-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;display:block;}
+.faille-card{background:var(--surface2);border:1px solid rgba(255,59,92,.2);border-radius:14px;padding:14px;margin-bottom:10px;}
+.import-tabs{display:flex;gap:0;margin-bottom:16px;background:var(--surface2);border-radius:12px;padding:4px;}
+.import-tab{flex:1;padding:8px;border-radius:8px;border:none;background:none;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;cursor:pointer;text-align:center;transition:all .2s;}
+.import-tab.active{background:var(--accent);color:#000;}
+.upload-zone{border:2px dashed var(--border);border-radius:16px;padding:28px 16px;text-align:center;cursor:pointer;margin-bottom:12px;position:relative;}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.upload-zone-icon{font-size:32px;margin-bottom:8px;}
+.upload-zone-text{font-size:13px;color:var(--muted);line-height:1.5;}
+.import-panel{display:none;}.import-panel.active{display:block;}
+.progress-wrap{background:var(--surface2);border-radius:8px;height:6px;overflow:hidden;margin:8px 0;}
+.progress-bar-inner{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));border-radius:8px;transition:width .4s;width:0%;}
+.parsed-item{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:6px;font-size:13px;}
+.quick-import-box{background:linear-gradient(135deg,rgba(0,255,135,.05),rgba(0,102,255,.05));border:1px solid rgba(0,255,135,.2);border-radius:16px;padding:16px;margin-bottom:12px;}
+.quick-import-title{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;color:var(--accent);margin-bottom:10px;}
+.score-search-card{background:linear-gradient(135deg,rgba(0,102,255,.08),rgba(0,255,135,.05));border:1px solid rgba(0,102,255,.25);border-radius:16px;padding:16px;margin-bottom:12px;}
+.score-item{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.score-item:last-child{border-bottom:none;}
+.score-found{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--accent);}
+.score-searching{color:var(--muted);font-size:12px;animation:blink 1s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
+.bankroll-hero{background:linear-gradient(135deg,rgba(0,255,135,.08),rgba(0,102,255,.06));border:1px solid rgba(0,255,135,.2);border-radius:20px;padding:20px;margin-bottom:12px;text-align:center;}
+.bankroll-amount{font-family:'Bebas Neue',sans-serif;font-size:52px;letter-spacing:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;}
+.bankroll-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:2px;margin-bottom:4px;}
+.bankroll-change{font-family:'JetBrains Mono',monospace;font-size:14px;margin-top:6px;}
+.pnl-chart{background:var(--surface2);border-radius:14px;padding:14px;margin-bottom:12px;overflow:hidden;}
+.pnl-canvas{width:100%;height:120px;display:block;}
+.bet-item{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;}
+.bet-item-info{flex:1;}.bet-item-match{font-weight:600;font-size:13px;}.bet-item-meta{font-size:11px;color:var(--muted);margin-top:2px;}
+.bet-item-amount{text-align:right;}.bet-item-stake{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;}.bet-item-result{font-size:11px;margin-top:2px;}
+.bet-won{color:var(--accent);}.bet-lost{color:var(--danger);}.bet-pending{color:var(--warn);}
+.best-odd{border-color:var(--accent)!important;background:rgba(0,255,135,.06)!important;}
+.arb-box{background:linear-gradient(135deg,rgba(0,255,135,.1),rgba(0,102,255,.08));border:1px solid rgba(0,255,135,.3);border-radius:14px;padding:14px;margin-bottom:12px;}
+.arb-profit{font-family:'Bebas Neue',sans-serif;font-size:36px;color:var(--accent);}
+.market-tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin-bottom:14px;}
+.market-tabs::-webkit-scrollbar{display:none;}
+.market-tab{flex-shrink:0;padding:7px 14px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;}
+.market-tab.active{background:rgba(0,255,135,.1);border-color:var(--accent);color:var(--accent);}
+.form-input-row{display:flex;gap:6px;margin-bottom:8px;align-items:center;}
+.form-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.form-dot.w{background:var(--accent);}.form-dot.d{background:var(--warn);}.form-dot.l{background:var(--danger);}
+</style>
+</head>
+<body>
+<div class="voice-overlay" id="voiceOverlay">
+  <div class="voice-orb" id="voiceOrb"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></div>
+  <div class="voice-status" id="voiceStatus">Initialisation...</div>
+  <div class="voice-transcript" id="voiceTranscript"></div>
+  <button class="voice-close" onclick="closeVoice()">✕ Fermer</button>
+</div>
+<header class="header">
+  <div class="logo">ORACLE</div>
+  <div class="header-right">
+    <div class="bankroll-badge" onclick="showScreen('bankroll',document.querySelector('.nav-btn:nth-child(6)'))">💰 <span id="header-bankroll">0€</span></div>
+    <div class="status-dot"></div>
+  </div>
+</header>
+<main>
+<!-- DASHBOARD -->
+<div class="screen active" id="screen-dashboard">
+  <div class="section-title">TABLEAU DE BORD</div>
+  <div class="stats-row">
+    <div class="stat-box"><div class="stat-val" id="stat-total">0</div><div class="stat-label">Matchs</div></div>
+    <div class="stat-box"><div class="stat-val" id="stat-scores">0</div><div class="stat-label">Scorés</div></div>
+    <div class="stat-box"><div class="stat-val" id="stat-winrate">—</div><div class="stat-label">Win%</div></div>
+  </div>
+  <div class="stats-row">
+    <div class="stat-box"><div class="stat-val" id="stat-v1pct">—</div><div class="stat-label">V1 %</div></div>
+    <div class="stat-box"><div class="stat-val" id="stat-xpct">—</div><div class="stat-label">Nul %</div></div>
+    <div class="stat-box"><div class="stat-val" id="stat-v2pct">—</div><div class="stat-label">V2 %</div></div>
+  </div>
+  <div class="quick-import-box">
+    <div class="quick-import-title">⚡ IMPORT RAPIDE</div>
+    <textarea class="input-field" id="quick-import-text" rows="3" placeholder="PSG vs Lyon 18/01/26 V1:1.85 X:3.40 V2:4.20"></textarea>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button class="btn btn-outline" onclick="pasteClipboard('quick-import-text')" style="flex:1;font-size:12px;padding:10px;">📋 Coller</button>
+      <button class="btn btn-primary" onclick="quickImport()" style="flex:2;font-size:12px;padding:10px;">⚡ IMPORTER</button>
+    </div>
+    <div id="quick-import-result"></div>
+  </div>
+  <div class="score-search-card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div><div style="font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:2px;color:var(--accent2);">🔍 SCORES MANQUANTS</div><div style="font-size:12px;color:var(--muted);margin-top:2px;" id="missing-count">—</div></div>
+      <button class="btn btn-outline" onclick="searchMissingScores()" id="search-scores-btn" style="width:auto;padding:10px 16px;font-size:12px;">Chercher</button>
+    </div>
+    <div id="score-search-results"></div>
+  </div>
+  <div class="card"><div class="card-title">⚡ FAILLES DÉTECTÉES</div><div id="failles-preview"><div style="font-size:13px;color:var(--muted);">Ajoute des matchs avec cotes pour détecter des failles.</div></div></div>
+  <div class="card"><div class="card-title">🎯 DERNIÈRE ANALYSE IA</div><div id="last-analysis"><div style="font-size:13px;color:var(--muted);">Aucune analyse récente.</div></div></div>
+</div>
+<!-- MEMOIRE -->
+<div class="screen" id="screen-memoire">
+  <div class="section-title">MÉMOIRE <span style="font-size:12px;font-family:'DM Sans',sans-serif;color:var(--muted);font-weight:400;" id="mem-count-label">0 entrées</span></div>
+  <div class="tags-scroll">
+    <div class="tag active" onclick="filterMemory('all',this)">Tous</div>
+    <div class="tag" onclick="filterMemory('with-score',this)">Avec score</div>
+    <div class="tag" onclick="filterMemory('no-score',this)">Sans score</div>
+    <div class="tag" onclick="filterMemory('with-odds',this)">Avec cotes</div>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:12px;">
+    <button class="btn btn-primary" onclick="openModal('modal-add')" style="f<div class="section-title">ANALYSE IA</div>
+  <div class="market-tabs">
+    <div class="market-tab active" onclick="selectMarket('1x2',this)">1X2</div>
+    <div class="market-tab" onclick="selectMarket('btts',this)">BTTS</div>
+    <div class="market-tab" onclick="selectMarket('over25',this)">+2.5 Buts</div>
+    <div class="market-tab" onclick="selectMarket('handicap',this)">Handicap</div>
+    <div class="market-tab" onclick="selectMarket('combo',this)">Combiné</div>
+  </div>
+  <div class="card">
+    <div class="card-title" id="analyse-card-title">🔍 MATCH À ANALYSER — 1X2</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Équipe V1</label><input type="text" class="input-field" id="analyse-home" placeholder="PSG"></div>
+      <div class="form-group"><label class="form-label">Équipe V2</label><input type="text" class="input-field" id="analyse-away" placeholder="Lyon"></div>
+    </div>
+    <div id="market-1x2">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Cote V1</label><input type="number" class="input-field" id="analyse-odd1" placeholder="1.85" step="0.01"></div>
+        <div class="form-group"><label class="form-label">Cote X</label><input type="number" class="input-field" id="analyse-oddx" placeholder="3.40" step="0.01"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Cote V2</label><input type="number" class="input-field" id="analyse-odd2" placeholder="4.20" step="0.01"></div>
+    </div>
+    <div id="market-btts" style="display:none;"><div class="form-row"><div class="form-group"><label class="form-label">BTTS Oui</label><input type="number" class="input-field" id="analyse-btts-yes" placeholder="1.75" step="0.01"></div><div class="form-group"><label class="form-label">BTTS Non</label><input type="number" class="input-field" id="analyse-btts-no" placeholder="2.10" step="0.01"></div></div></div>
+    <div id="market-over25" style="display:none;"><div class="form-row"><div class="form-group"><label class="form-label">Cote +2.5</label><input type="number" class="input-field" id="analyse-over" placeholder="1.90" step="0.01"></div><div class="form-group"><label class="form-label">Cote -2.5</label><input type="number" class="input-field" id="analyse-under" placeholder="1.95" step="0.01"></div></div></div>
+    <div id="market-handicap" style="display:none;"><div class="form-group"><label class="form-label">Handicap</label><input type="text" class="input-field" id="analyse-handicap" placeholder="-1.5"></div><div class="form-row"><div class="form-group"><label class="form-label">Cote Handi V1</label><input type="number" class="input-field" id="analyse-hv1" placeholder="2.20" step="0.01"></div><div class="form-group"><label class="form-label">Cote Handi V2</label><input type="number" class="input-field" id="analyse-hv2" placeholder="1.75" step="0.01"></div></div></div>
+    <div id="market-combo" style="display:none;"><div class="alert alert-blue" style="margin-bottom:10px;font-size:12px;">Décris le combiné souhaité.</div><textarea class="input-field" id="analyse-combo-desc" rows="3" placeholder="Ex: PSG gagne + BTTS + +2.5 buts..."></textarea></div>
+    <div class="card-title" style="margin-top:8px;">📊 FORME (5 DERNIERS — W/D/L)</div>
+    <div class="form-input-row"><span style="font-size:12px;color:var(--muted);min-width:60px;">V1 :</span><input type="text" class="input-field" id="forme-home" placeholder="WDWWL" style="font-family:'JetBrains Mono',monospace;text-transform:uppercase;" maxlength="5"></div>
+    <div class="form-input-row" style="margin-top:6px;"><span style="font-size:12px;color:var(--muted);min-width:60px;">V2 :</span><input type="text" class="input-field" id="forme-away" placeholder="LWWDW" style="font-family:'JetBrains Mono',monospace;text-transform:uppercase;" maxlength="5"></div>
+    <div id="forme-display" style="margin:8px 0;display:flex;gap:12px;"></div>
+    <div class="form-row" style="margin-top:4px;">
+      <div class="form-group"><label class="form-label">Date</label><input type="text" class="input-field" id="analyse-date" placeholder="JJ/MM/AAAA"></div>
+      <div class="form-group"><label class="form-label">Compétition</label><input type="text" class="input-field" id="analyse-comp" placeholder="Ligue 1"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Contexte</label><textarea class="input-field" id="analyse-extra" rows="2" placeholder="Blessés, météo, enjeux..."></textarea></div>
+    <button class="btn btn-primary" onclick="analyseMatch()">⚡ LANCER L'ANALYSE IA</button>
+  </div>
+  <div id="analyse-result-container"></div>
+</div>
+<!-- CHAT -->
+<div class="screen" id="screen-chat">
+  <div class="chat-container">
+    <div class="chat-messages" id="chat-messages">
+      <div class="msg ai"><div class="msg-avatar">AI</div><div class="msg-bubble">Salut ! Je suis <strong>Oracle IA v5</strong> 🔮<br><br>🎫 <strong>Tickets</strong> — "Ticket PSG vs Lyon V1 cote 1.85"<br>📊 <strong>Analyse</strong> — "Analyse Real vs Barça BTTS"<br>💰 <strong>Kelly</strong> — "Mise Kelly cote 2.10 confiance 60%"<br>🔄 <strong>Comparer</strong> — "Compare cotes PSG 1xBet vs Betclic"<br>🔍 <strong>Failles</strong> — "Quelles sont les value bets ?"<br><br>Que veux-tu faire ?</div></div>
+    </div>
+    <input type="file" id="attach-input" accept="image/*,.csv,.json,.txt" multiple style="display:none;" onchange="handleAttachment(event)">
+    <div class="chat-input-row">
+      <button class="icon-btn attach" onclick="document.getElementById('attach-input').click()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+      <textarea id="chat-input" placeholder="Tape ou parle à Oracle..." rows="1" onkeydown="handleChatKey(event)" oninput="autoResize(this)"></textarea>
+      <button class="icon-btn mic" id="micBtn" onclick="toggleVoice()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></button>
+      <button class="icon-btn send" onclick="sendChat()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+    </div>
+  </div>
+</div>
+<!-- FAILLES -->
+<div class="screen" id="screen-failles">
+  <div class="section-title">FAILLES & VALUE BETS</div>
+  <div class="alert alert-warn">⚡ Analyse basée sur tes matchs avec cotes V1/X/V2.</div>
+  <button class="btn btn-outline" onclick="detectFailles()" style="margin-bottom:16px;">🔍 ANALYSER LES FAILLES</button>
+  <div id="failles-list"><div class="empty-state"><div style="font-size:48px;">🔍</div><div style="font-size:16px;font-weight:600;color:var(--text);margin-top:12px;">Analyse en attente</div></div></div>
+</div>
+<!-- BANKROLL -->
+<div class="screen" id="screen-bankroll">
+  <div class="section-title">💰 BANKROLL</div>
+  <div class="bankroll-hero">
+    <div class="bankroll-label">SOLDE ACTUEL</div>
+    <div class="bankroll-amount" id="bankroll-display">0.00 €</div>
+    <div class="bankroll-change" id="bankroll-change" style="color:var(--muted);">—</div>
+  </div>
+  <div class="stats-row">
+    <div class="stat-box"><div class="stat-val" id="br-winrate">—</div><div class="stat-label">Win Rate</div></div>
+    <div class="stat-box"><div class="stat-val" id="br-roi">—</div><div class="stat-label">ROI</div></div>
+    <div class="stat-box"><div class="stat-val" id="br-profit">—</div><div class="stat-label">Profit</div></div>
+  </div>
+  <div class="pnl-chart"><div class="card-title" style="margin-bottom:8px;">📈 COURBE P&L</div><canvas class="pnl-canvas" id="pnl-canvas"></canvas></div>
+  <div class="card">
+    <div class="card-title">🧮 CALCULATEUR KELLY</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Cote</label><input type="number" class="input-field" id="kelly-odd" placeholder="2.10" step="0.01" oninput="calcKelly()"></div>
+      <div class="form-group"><label class="form-label">Confiance %</label><input type="number" class="input-field" id="kelly-prob" placeholder="55" min="1" max="99" oninput="calcKelly()"></div>
+    </div>
+    <div id="kelly-result" style="background:var(--surface2);border-radius:12px;padding:14px;text-align:center;min-height:60px;display:flex;align-items:center;justify-content:center;"><span style="color:var(--muted);font-size:13px;">Entre une cote et une confiance</span></div>
+  </div>
+  <div class="card">
+    <div class="card-title">➕ ENREGISTRER UN PARI</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Match</label><input type="text" class="input-field" id="bet-match" placeholder="PSG vs Lyon"></div>
+      <div class="form-group"><label class="form-label">Sélection</label><input type="text" class="input-field" id="bet-sel" placeholder="V1 / BTTS / +2.5"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Cote</label><input type="number" class="input-field" id="bet-odd" placeholder="1.85" step="0.01"></div>
+      <div class="form-group"><label class="form-label">Mise (€)</label><input type="number" class="input-field" id="bet-stake" placeholder="10" step="0.01"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Date</label><input type="text" class="input-field" id="bet-date" placeholder="JJ/MM/AAAA"></div>
+      <div class="form-group"><label class="form-label">Statut</label><select class="input-field" id="bet-status"><option value="pending">⏳ En cours</option><option value="won">✅ Gagné</option><option value="lost">❌ Perdu</option></select></div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-outline" onclick="openModal('modal-bankroll-init')" style="flex:1;font-size:13px;padding:11px;">⚙️ Solde initial</button>
+      <button class="btn btn-primary" onclick="saveBet()" style="flex:2;font-size:13px;padding:11px;">💾 ENREGISTRER</button>
+    </div>
+  </div>
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div class="card-title" style="margin-bottom:0;">📋 HISTORIQUE PARIS</div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-outline" onclick="filterBets('all')" id="bfilter-all" style="padding:5px 10px;font-size:11px;width:auto;">Tous</button>
+        <button class="btn btn-outline" onclick="filterBets('pending')" id="bfilter-pending" style="padding:5px 10px;font-size:11px;width:auto;">⏳</button>
+        <button class="btn btn-outline" onclick="filterBets('won')" id="bfilter-won" style="padding:5px 10px;font-size:11px;width:auto;">✅</button>
+        <button class="btn btn-outline" onclick="filterBets('lost')" id="bfilter-lost" style="padding:5px 10px;font-size:11px;width:auto;">❌</button>
+      </div>
+    </div>
+    <div id="bets-list"><div style="font-size:13px;color:var(--muted);text-align:center;padding:20px;">Aucun pari enregistré.</div></div>
+  </div>
+</div>
+<!-- COMPARATEUR -->
+<div class="screen" id="screen-comparer">
+  <div class="section-title">🔄 COMPARATEUR</div>
+  <div class="card">
+    <div class="card-title">📌 MATCH</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Équipe V1</label><input type="text" class="input-field" id="cmp-home" placeholder="PSG" oninput="updateCompTitle()"></div>
+      <div class="form-group"><label class="form-label">Équipe V2</label><input type="text" class="input-field" id="cmp-away" placeholder="Lyon" oninput="updateCompTitle()"></div>
+    </div>
+    <div style="font-size:13px;font-weight:600;text-align:center;margin-bottom:12px;color:var(--muted);" id="comp-match-title">— vs —</div>
+  </div>
+  <div style="display:flex;gap:6px;margin-bottom:8px;font-size:10px;color:var(--muted);padding:0 2px;"><div style="flex:3;">BOOKMAKER</div><div style="flex:1;text-align:center;">V1</div><div style="flex:1;text-align:center;">X</div><div style="flex:1;text-align:center;">V2</div></div>
+  <div id="bookies-container"></div>
+  <button class="btn btn-outline" onclick="addBookie()" style="margin-bottom:12px;padding:10px;font-size:13px;">+ Ajouter un bookmaker</button>
+  <button class="btn btn-primary" onclick="compareOdds()">🔍 COMPARER LES COTES</button>
+  <div id="compare-result" style="margin-top:12px;"></div>
+</div>
+<!-- BACKUP -->
+<div class="screen" id="screen-backup">
+  <div class="section-title">SAUVEGARDE</div>
+  <div class="card"><div class="card-title">📥 EXPORT</div><div style="display:flex;gap:8px;"><button class="btn btn-outline" onclick="exportJSON()" style="flex:1;padding:10px;font-size:13px;">JSON</button><button class="btn btn-outline" onclick="exportCSV()" style="flex:1;padding:10px;font-size:13px;">CSV</button></div><div style="font-size:11px;color:var(--muted);margin-top:8px;">Dernière sauvegarde : <span id="last-export-date">Jamais</span></div></div>
+  <div class="card"><div class="card-title">📤 RESTAURER</div><div class="upload-zone" style="padding:20px 16px;"><input type="file" accept=".json,.csv" onchange="importBackup(event)"><div class="upload-zone-icon">📂</div><div class="upload-zone-text"><strong>Appuie pour sélectionner</strong><br>Fichier .json ou .csv Oracle</div></div></div>
+  <div class="card" style="border-color:rgba(255,59,92,.2);"><div class="card-title" style="color:var(--danger);">⚠️ ZONE DANGER</div><div style="display:flex;gap:8px;"><button class="btn btn-danger" onclick="clearAllData()" style="flex:1;padding:10px;font-size:12px;">🗑️ Effacer mémoire</button><button class="btn btn-danger" onclick="clearAllBets()" style="flex:1;padding:10px;font-size:12px;">🗑️ Effacer paris</button></div></div>
+</div>
+</main>
+<nav class="nav">
+  <button class="nav-btn active" onclick="showScreen('dashboard',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Dashboard</button>
+  <button class="nav-btn" onclick="showScreen('memoire',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Mémoire</button>
+  <button class="nav-btn" onclick="showScreen('analyse',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Analyser</button>
+  <button class="nav-btn" onclick="showScreen('chat',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Chat/Voix</button>
+  <button class="nav-btn" onclick="showScreen('failles',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Failles</button>
+  <button class="nav-btn" onclick="showScreen('bankroll',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Bankroll</button>
+  <button class="nav-btn" onclick="showScreen('comparer',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>Comparer</button>
+  <button class="nav-btn" onclick="showScreen('backup',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Backup</button>
+</nav>
+<!-- MODAL AJOUTER -->
+<div class="modal-overlay" id="modal-add" onclick="closeModalOutside(event,'modal-add')">
+  <div class="modal"><div class="modal-handle"></div><div class="modal-title">AJOUTER UN MATCH</div>
+    <div class="tags-scroll" style="margin-bottom:16px;"><div class="tag active" onclick="selectType('complet',this)">✅ Complet</div><div class="tag" onclick="selectType('sans-score',this)">⏳ Sans score</div><div class="tag" onclick="selectType('cotes-only',this)">📊 Cotes seules</div></div>
+    <div id="field-teams"><div class="form-row"><div class="form-group"><label class="form-label">Équipe V1</label><input type="text" class="input-field" id="add-home" placeholder="Domicile"></div><div class="form-group"><label class="form-label">Équipe V2</label><input type="text" class="input-field" id="add-away" placeholder="Extérieur"></div></div></div>
+    <div id="field-score"><div class="form-row"><div class="form-group"><label class="form-label">Score V1</label><input type="number" class="input-field" id="add-score1" placeholder="0" min="0"></div><div class="form-group"><label class="form-label">Score V2</label><input type="number" class="input-field" id="add-score2" placeholder="0" min="0"></div></div></div>
+    <div id="field-odds"><div class="form-group"><label class="form-label">Compétition</label><input type="text" class="input-field" id="add-comp" placeholder="Ligue 1"></div><div class="form-group"><label class="form-label">Date</label><input type="text" class="input-field" id="add-date" placeholder="JJ/MM/AAAA"></div><div class="form-row"><div class="form-group"><label class="form-label">Cote V1</label><input type="number" class="input-field" id="add-odd1" placeholder="1.85" step="0.01"></div><div class="form-group"><label class="form-label">Cote X</label><input type="number" class="input-field" id="add-oddx" placeholder="3.40" step="0.01"></div></div><div class="form-group"><label class="form-label">Cote V2</label><input type="number" class="input-field" id="add-odd2" placeholder="4.20" step="0.01"></div></div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="input-field" id="add-notes" rows="2"></textarea></div>
+    <div style="display:flex;gap:10px;margin-top:4px;"><button class="btn btn-outline" onclick="closeModal('modal-add')" style="flex:1;">Annuler</button><button class="btn btn-primary" onclick="addMatch()" style="flex:2;">SAUVEGARDER</button></div>
+  </div>
+</div>
+<!-- MODAL IMPORT -->
+<div class="modal-overlay" id="modal-import" onclick="closeModalOutside(event,'modal-import')">
+  <div class="modal"><div class="modal-handle"></div><div class="modal-title">IMPORTER</div>
+    <div class="import-tabs"><button class="import-tab active" onclick="switchTab('text',this)">📄 Texte</button><button class="import-tab" onclick="switchTab('photo',this)">📸 Photos</button><button class="import-tab" onclick="switchTab('csv',this)">📊 CSV</button></div>
+    <div class="import-panel active" id="tab-text"><div class="alert alert-blue" style="margin-bottom:10px;">Colle tes matchs ci-dessous.</div><button class="btn btn-outline" onclick="pasteClipboard('text-import-field')" style="margin-bottom:8px;padding:10px;font-size:12px;">📋 Coller</button><textarea class="input-field" id="text-import-field" rows="6" placeholder="PSG vs Lyon 18/01/26 V1:1.85 X:3.40 V2:4.20&#10;Barça - Atlético 2-1..."></textarea><div id="text-parsed" style="margin-top:8px;"></div><button class="btn btn-primary" onclick="parseTextImport()" style="margin-top:8px;">🔍 EXTRAIRE LES MATCHS</button></div>
+    <div class="import-panel" id="tab-photo"><div class="alert alert-blue" style="margin-bottom:10px;">📸 Screenshots 1xBet — max 10</div><div class="upload-zone"><input type="fasync function searchMissingScores(){
+  const missing=memory.filter(m=>(!m.score1||m.score1==='')&&(m.home||m.away)&&m.matchDate);
+  if(!missing.length){document.getElementById('score-search-results').innerHTML=`<div class="alert alert-green">✅ Tous les matchs ont un score !</div>`;return;}
+  const btn=document.getElementById('search-scores-btn');btn.textContent='⏳';btn.disabled=true;
+  const container=document.getElementById('score-search-results');
+  container.innerHTML=`<div style="font-size:12px;color:var(--muted);margin-bottom:8px;">Recherche ${Math.min(missing.length,10)} scores...</div>`+missing.slice(0,10).map((m,i)=>`<div class="score-item" id="si-${i}"><div>${m.home||'?'} vs ${m.away||'?'}<div style="font-size:11px;color:var(--muted);">${m.matchDate||''}</div></div><div class="score-searching" id="ss-${i}">🔍</div></div>`).join('');
+  const batch=missing.slice(0,10);
+  try{
+    const body={model:"claude-sonnet-4-20250514",max_tokens:1500,tools:[{type:"web_search_20250305",name:"web_search"}],messages:[{role:'user',content:`Cherche scores sur internet. JSON UNIQUEMENT:\n[{"index":0,"score1":"X","score2":"Y","found":true}]\nMatchs:\n${batch.map((m,i)=>`${i}. ${m.home||'?'} vs ${m.away||'?'} — ${m.matchDate||'?'} — ${m.comp||'?'}`).join('\n')}`}]};
+    const r2=await fetch("/.netlify/functions/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+    const d2=await r2.json();
+    const resp=d2.content?.filter(c=>c.type==='text').map(c=>c.text||'').join('')||'';
+    const clean=resp.replace(/```json|```/g,'').trim();
+    let results;try{results=JSON.parse(clean);}catch(e){const m=clean.match(/\[[\s\S]*\]/);results=m?JSON.parse(m[0]):[];}
+    if(!Array.isArray(results))results=[];
+    let found=0;
+    results.forEach(r=>{const el=document.getElementById(`ss-${r.index}`);if(r.found&&r.score1!==''&&r.score2!==''){found++;if(el)el.innerHTML=`<span class="score-found">${r.score1}-${r.score2}</span>`;const m=batch[r.index];if(m){const idx=memory.findIndex(x=>x.id===m.id);if(idx>=0){memory[idx].score1=String(r.score1);memory[idx].score2=String(r.score2);memory[idx].type='complet';}}}else{if(el)el.innerHTML=`<span style="color:var(--muted);font-size:11px;">Non trouvé</span>`;}});
+    saveMemory();renderDashboard();container.innerHTML+=`<div class="alert alert-green" style="margin-top:8px;">✅ ${found} score(s) trouvé(s) !</div>`;
+  }catch(err){container.innerHTML+=`<div class="alert alert-red" style="margin-top:8px;">❌ ${err.message}</div>`;}
+  btn.textContent='Chercher';btn.disabled=false;
+}
+
+function showScreen(name,btn){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));document.getElementById('screen-'+name).classList.add('active');if(btn)btn.classList.add('active');if(name==='memoire')renderMemory();if(name==='dashboard')renderDashboard();if(name==='bankroll'){renderBankroll();drawPnlChart();}if(name==='comparer')initBookies();}
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');pendingImports=[];}
+function closeModalOutside(e,id){if(e.target===document.getElementById(id))closeModal(id);}
+function switchTab(tab,el){document.querySelectorAll('.import-tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.import-panel').forEach(p=>p.classList.remove('active'));el.classList.add('active');document.getElementById('tab-'+tab).classList.add('active');}
+async function pasteClipboard(id){try{document.getElementById(id).value=await navigator.clipboard.readText();}catch(e){alert('Appuie longuement → Coller');}}
+
+async function quickImport(){
+  const text=document.getElementById('quick-import-text').value.trim();if(!text){alert('Colle du texte !');return;}
+  const result=document.getElementById('quick-import-result');result.innerHTML=`<div class="alert alert-blue" style="margin-top:8px;">⏳ Extraction IA...</div>`;
+  try{const r=await callAI([{role:'user',content:`Extrais matchs football. JSON UNIQUEMENT:\n[{"home":"","away":"","score1":"","score2":"","odd1":null,"oddx":null,"odd2":null,"comp":"","matchDate":"","notes":""}]\nTexte: ${text}`}],'',2000);const m=JSON.parse(r.replace(/```json|```/g,'').trim());if(!Array.isArray(m)||!m.length){result.innerHTML=`<div class="alert alert-warn" style="margin-top:8px;">⚠️ Aucun match extrait.</div>`;return;}const imp=toMemoryItems(m);memory=[...imp,...memory];saveMemory();renderDashboard();updateMemoryCount();document.getElementById('quick-import-text').value='';result.innerHTML=`<div class="alert alert-green" style="margin-top:8px;">✅ ${imp.length} match(s) importé(s) !</div>`;setTimeout(()=>{result.innerHTML='';},3000);}catch(err){result.innerHTML=`<div class="alert alert-red" style="margin-top:8px;">❌ ${err.message}</div>`;}
+}
+
+async function parseTextImport(){
+  const text=document.getElementById('text-import-field').value.trim();if(!text){alert('Colle du texte !');return;}
+  const parsed=document.getElementById('text-parsed');parsed.innerHTML=`<div class="alert alert-blue">⏳ Extraction...</div>`;
+  try{const r=await callAI([{role:'user',content:`Extrais matchs football. JSON UNIQUEMENT:\n[{"home":"","away":"","score1":"","score2":"","odd1":null,"oddx":null,"odd2":null,"comp":"","matchDate":"","notes":""}]\nTexte: ${text}`}],'',2000);const m=JSON.parse(r.replace(/```json|```/g,'').trim());if(!Array.isArray(m)||!m.length){parsed.innerHTML=`<div class="alert alert-warn">⚠️ Aucun match extrait.</div>`;return;}pendingImports=m;renderParsedPreview(parsed,m);}catch(err){parsed.innerHTML=`<div class="alert alert-red">❌ ${err.message}</div>`;}
+}
+
+async function handlePhotoUpload(e){
+  const files=Array.from(e.target.files).slice(0,10);if(!files.length)return;
+  const preview=document.getElementById('photo-preview'),progress=document.getElementById('photo-progress'),bar=document.getElementById('photo-bar'),status=document.getElementById('photo-status'),parsed=document.getElementById('photo-parsed');
+  parsed.innerHTML='';pendingImports=[];preview.innerHTML=files.map(f=>`<img src="${URL.createObjectURL(f)}" style="width:100%;border-radius:12px;margin-bottom:6px;max-height:200px;object-fit:cover;">`).join('');
+  progress.style.display='block';let all=[];
+  for(let i=0;i<files.length;i++){status.textContent=`📖 Image ${i+1}/${files.length}...`;bar.style.width=((i+1)/files.length*100)+'%';const m=await readImageMatches(files[i]);all=all.concat(m);}
+  status.textContent=`✅ ${all.length} match(s) détecté(s)`;if(!all.length){parsed.innerHTML=`<div class="alert alert-warn">⚠️ Aucun match détecté.</div>`;return;}pendingImports=all;renderParsedPreview(parsed,all);
+}
+async function readImageMatches(file){return new Promise(resolve=>{const reader=new FileReader();reader.onload=async e=>{const b64=e.target.result.split(',')[1];try{const r=await callAI([{role:'user',content:[{type:'image',source:{type:'base64',media_type:file.type||'image/jpeg',data:b64}},{type:'text',text:`Analyse cette image. JSON UNIQUEMENT:\n[{"home":"","away":"","score1":"","score2":"","odd1":null,"oddx":null,"odd2":null,"comp":"","matchDate":"JJ/MM/AAAA","notes":""}]\nNe JAMAIS retourner [] si matchs visibles.`}]}],'',1500);resolve(JSON.parse(r.replace(/```json|```/g,'').trim()));}catch(err){resolve([]);}};reader.readAsDataURL(file);});}
+
+function parseCSVContent(text){
+  // Remove BOM if present
+  if(text.charCodeAt(0)===0xFEFF)text=text.slice(1);
+  // Normalize line endings (handle \r\n and \r)
+  const lines=text.split(/\r\n|\r|\n/).filter(l=>l.trim().length>0);
+  if(lines.length<2)return null;
+  const sep=lines[0].includes(';')?';':(lines[0].includes('\t')?'\t':',');
+  const headers=lines[0].split(sep).map(h=>h.trim().toLowerCase().replace(/^"|"$/g,''));
+  const matches=[];
+  for(let i=1;i<lines.length;i++){
+    const cols=lines[i].split(sep).map(c=>c.trim().replace(/^"|"$/g,'').replace(/"$/,''));
+    if(cols.every(c=>!c))continue; // skip fully empty rows
+    // Exact match first, then prefix/substring match as fallback
+    const get=keys=>{
+      for(const k of keys){
+        let idx=headers.indexOf(k);
+        if(idx<0)idx=headers.findIndex(h=>h===k||h.startsWith(k+'_')||h.startsWith(k));
+        if(idx>=0&&cols[idx]!==undefined&&cols[idx]!=='')return cols[idx];
+      }
+      return '';
+    };
+    matches.push({
+      home:get(['equipe1','equipe_1','home','team1','team_1','domicile']),
+      away:get(['equipe2','equipe_2','away','team2','team_2','exterieur']),
+      score1:get(['score1','score_1','but1','but_1']),
+      score2:get(['score2','score_2','but2','but_2']),
+      odd1:parseFloat(get(['cote_v1','cotev1','v1','cote1','odd1']))||null,
+      oddx:parseFloat(get(['cote_x','cotex','x','cotenul','oddx']))||null,
+      odd2:parseFloat(get(['cote_v2','cotev2','v2','cote2','odd2']))||null,
+      comp:get(['competition','comp']),
+      matchDate:get(['date_match','matchdate','date']),
+      notes:get(['notes','note'])
+    });
+  }
+  return matches.filter(m=>m.home||m.away||m.odd1||m.oddx||m.odd2);
+}
+
+function handleCSVUpload(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const valid=parseCSVContent(ev.target.result);
+    const target=document.getElementById('csv-parsed');
+    if(valid===null){target.innerHTML=`<div class="alert alert-warn">⚠️ Fichier vide ou format invalide (il faut au moins un en-tête + une ligne).</div>`;return;}
+    if(!valid.length){target.innerHTML=`<div class="alert alert-warn">⚠️ Aucun match reconnu. Vérifie que les colonnes contiennent : equipe1, equipe2, score1, score2, v1, x, v2, date.</div>`;return;}
+    pendingImports=valid;renderParsedPreview(target,valid);
+  };
+  reader.onerror=()=>{document.getElementById('csv-parsed').innerHTML=`<div class="alert alert-red">❌ Impossible de lire le fichier.</div>`;};
+  reader.readAsText(file,'UTF-8');
+}
+
+async function handleAttachment(e){const files=Array.from(e.target.files);if(!files.length)return;e.target.value='';for(const file of files){const ext=file.name.split('.').pop().toLowerCase();if(['jpg','jpeg','png','gif','webp'].includes(ext)){appendMsg('user',`📸 ${file.name}`);const tid='t'+Date.now();const cm=document.getElementById('chat-messages');cm.innerHTML+=`<div class="msg ai" id="${tid}"><div class="msg-avatar">AI</div><div class="msg-bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div></div>`;cm.scrollTop=cm.scrollHeight;const m=await readImageMatches(file);document.getElementById(tid)?.remove();if(m.length>0){const imp=toMemoryItems(m);memory=[...imp,...memory];saveMemory();renderDashboard();updateMemoryCount();appendMsg('ai',`✅ **${imp.length} match(s) importé(s)** !\n${imp.slice(0,3).map(x=>`• ${x.home||'?'} vs ${x.away||'?'}${x.odd1?' V1:'+x.odd1:''}`).join('\n')}`);}else{appendMsg('ai','⚠️ Aucun match détecté.');}}else if(ext==='json'){const reader=new FileReader();reader.onload=ev=>{try{const data=JSON.parse(ev.target.result);const imp=data.memory||data;if(!Array.isArray(imp)||!imp.length){appendMsg('ai','❌ JSON invalide.');return;}const ex=new Set(memory.map(m=>m.id));const n=imp.filter(m=>!ex.has(m.id));memory=[...n,...memory];saveMemory();renderDashboard();updateMemoryCount();appendMsg('user',`📁 ${file.name}`);appendMsg('ai',`✅ **${n.length} match(s) restauré(s)** !`);}catch(e){appendMsg('ai','❌ Erreur lecture JSON.');}};reader.readAsText(file,'UTF-8');}else if(['csv','txt'].includes(ext)){const reader=new FileReader();reader.onload=ev=>{const valid=parseCSVContent(ev.target.result);appendMsg('user',`📊 ${file.name}`);if(valid===null){appendMsg('ai','❌ Fichier vide ou format invalide.');return;}if(!valid.length){appendMsg('ai','⚠️ Aucun match reconnu dans ce CSV. Vérifie les colonnes : equipe1, equipe2, score1, score2, v1, x, v2, date.');return;}memory=[...toMemoryItems(valid),...memory];saveMemory();renderDashboard();updateMemoryCount();appendMsg('ai',`✅ **${valid.length} match(s) importé(s)** depuis le CSV !\n${valid.slice(0,3).map(x=>`• ${x.home||'?'} vs ${x.away||'?'}${x.odd1?' V1:'+x.odd1:''}`).join('\n')}`);};reader.onerror=()=>{appendMsg('user',`📊 ${file.name}`);appendMsg('ai','❌ Impossible de lire le fichier.');};reader.readAsText(file,'UTF-8');}}}
+
+function toMemoryItems(m){return m.map((x,i)=>({id:Date.now()+i+Math.floor(Math.random()*100000),type:x.score1!==''&&x.score1!=null?'complet':'sans-score',date:new Date().toLocaleDateString('fr-FR'),matchDate:x.matchDate||'',home:x.home||'',away:x.away||'',score1:x.score1!=null?String(x.score1):'',score2:x.score2!=null?String(x.score2):'',comp:x.comp||'',odd1:x.odd1||null,oddx:x.oddx||null,odd2:x.odd2||null,notes:x.notes||''}));}
+function renderParsedPreview(c,m){c.innerHTML=`<div style="margin:10px 0 8px;font-size:12px;color:var(--muted);">✅ ${m.length} match(s) :</div>${m.slice(0,4).map(x=>`<div class="parsed-item"><div><div style="font-weight:600;">${x.home||'?'} vs ${x.away||'?'}</div><div style="font-size:11px;color:var(--muted);">${x.matchDate?'📅 '+x.matchDate+' · ':''}${x.odd1?'V1:'+x.odd1+' X:'+x.oddx+' V2:'+x.odd2:'Pas de cotes'}</div></div>${x.score1!==''&&x.score1!=null?`<div style="font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--accent);">${x.score1}-${x.score2}</div>`:''}</div>`).join('')}${m.length>4?`<div style="font-size:12px;color:var(--muted);text-align:center;padding:6px;">+${m.length-4} autres...</div>`:''}<button class="btn btn-primary" onclick="confirmImport()" style="margin-top:8px;">✅ IMPORTER ${m.length} MATCH(S)</button>`;}
+function confirmImport(){if(!pendingImports.length)return;const imp=toMemoryItems(pendingImports);memory=[...imp,...memory];saveMemory();closeModal('modal-import');renderMemory();renderDashboard();updateMemoryCount();['photo-preview','photo-parsed','text-parsed','csv-parsed'].forEach(id=>document.getElementById(id).innerHTML='');document.getElementById('photo-progress').style.display='none';document.getElementById('text-import-field').value='';pendingImports=[];}
+
+function selectType(type,el){currentType=type;document.querySelectorAll('#modal-add .tag').forEach(t=>t.classList.remove('active'));el.classList.add('active');document.getElementById('field-teams').style.display=type==='cotes-only'?'none':'block';document.getElementById('field-score').style.display=type==='complet'?'block':'none';}
+function addMatch(){const m={id:Date.now(),type:currentType,date:new Date().toLocaleDateString('fr-FR'),matchDate:document.getElementById('add-date').value.trim(),home:document.getElementById('add-home').value.trim(),away:document.getElementById('add-away').value.trim(),score1:document.getElementById('add-score1').value,score2:document.getElementById('add-score2').value,comp:document.getElementById('add-comp').value.trim(),odd1:parseFloat(document.getElementById('add-odd1').value)||null,oddx:parseFloat(document.getElementById('add-oddx').value)||null,odd2:parseFloat(document.getElementById('add-odd2').value)||null,notes:document.getElementById('add-notes').value.trim()};if(currentType!=='cotes-only'&&!m.home&&!m.away){alert('Ajoute au moins une équipe !');return;}memory.unshift(m);saveMemory();closeModal('modal-add');['add-home','add-away','add-score1','add-score2','add-comp','add-odd1','add-oddx','add-odd2','add-notes','add-date'].forEach(id=>document.getElementById(id).value='');renderMemory();renderDashboard();updateMemoryCount();}
+function saveMemory(){localStorage.setItem('oracle_memory',JSON.stringify(memory));}
+
+let currentFilter='all';
+function filterMemory(f,el){currentFilter=f;document.querySelectorAll('#screen-memoire .tags-scroll .tag').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderMemory();}
+function renderMemory(){const list=document.getElementById('memory-list');document.getElementById('mem-count-label').textContent=memory.length+' entrées';let filtered=memory;if(currentFilter==='with-score')filtered=memory.filter(m=>m.score1!==''&&m.score2!=='');if(currentFilter==='no-score')filtered=memory.filter(m=>!m.score1&&!m.score2);if(currentFilter==='with-odds')filtered=memory.filter(m=>m.odd1);if(!filtered.length){list.innerHTML=`<div class="empty-state"><div style="font-size:48px;">🗄️</div><div style="font-size:16px;font-weight:600;color:var(--text);margin-top:12px;">Aucun match</div></div>`;return;}list.innerHTML=filtered.map(m=>`<div class="match-card ${m.type==='sans-score'?'no-score':m.type==='cotes-only'?'pending':''}"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;"><div>${m.home||m.away?`<div class="match-teams">${m.home||'?'} <span style="color:var(--muted)">vs</span> ${m.away||'?'}</div>`:`<div class="match-teams" style="color:var(--muted);">Match sans équipe</div>`}<div style="font-size:11px;color:var(--muted);">${m.comp||''}${m.matchDate?' · 📅 '+m.matchDate:''}</div></div><div style="display:flex;gap:6px;align-items:center;">${m.type==='complet'?`<span class="badge badge-green">✓</span>`:m.type==='sans-score'?`<span class="badge badge-yellow">⏳</span>`:`<span class="badge badge-blue">📊</span>`}<button onclick="deleteMatch(${m.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:0 4px;">✕</button></div></div>${m.score1!==''&&m.score2!==''?`<div class="score-display">${m.score1} — ${m.score2}</div>`:''}${m.odd1||m.oddx||m.odd2?`<div class="odds-row">${m.odd1?`<div class="odd-box"><div class="odd-label">V1</div><div class="odd-val ${m.odd1<2?'low':m.odd1<3?'mid':'high'}">${m.odd1}</div></div>`:''} ${m.oddx?`<div class="odd-box"><div class="odd-label">X</div><div class="odd-val mid">${m.oddx}</div></div>`:''} ${m.odd2?`<div class="odd-box"><div class="odd-label">V2</div><div class="odd-val ${m.odd2<2?'low':m.odd2<3?'mid':'high'}">${m.odd2}</div></div>`:''}</div>`:''}${m.notes?`<div style="font-size:12px;color:var(--muted);margin-top:8px;font-style:italic;">${m.notes}</div>`:''}<div style="font-size:11px;color:var(--border);margin-top:6px;">${m.date}</div></div>`).join('');}
+function deleteMatch(id){memory=memory.filter(m=>m.id!==id);saveMemory();renderMemory();renderDashboard();updateMemoryCount();}
+
+function renderDashboard(){const ws=memory.filter(m=>m.score1!==''&&m.score2!=='');const missing=memory.filter(m=>(!m.score1||m.score1==='')&&(m.home||m.away)&&m.matchDate).length;const v1w=ws.filter(m=>parseInt(m.score1)>parseInt(m.score2)).length;const v2w=ws.filter(m=>parseInt(m.score1)<parseInt(m.score2)).length;const dr=ws.filter(m=>parseInt(m.score1)===parseInt(m.score2)).length;document.getElementById('stat-total').textContent=memory.length;document.getElementById('stat-scores').textContent=ws.length;document.getElementById('stat-winrate').textContent=ws.length>0?Math.round(v1w/ws.length*100)+'%':'—';document.getElementById('stat-v1pct').textContent=ws.length>0?Math.round(v1w/ws.length*100)+'%':'—';document.getElementById('stat-xpct').textContent=ws.length>0?Math.round(dr/ws.length*100)+'%':'—';document.getElementById('stat-v2pct').textContent=ws.length>0?Math.round(v2w/ws.length*100)+'%':'—';document.getElementById('missing-count').textContent=missing>0?`${missing} match(s) sans score`:'Tous les scores remplis ✅';updateMemoryCount();const wo=memory.filter(m=>m.odd1&&m.oddx&&m.odd2);if(wo.length>=2){let f=[];wo.forEach(m=>{if(m.score1!==''&&m.score2!==''){const s1=parseInt(m.score1),s2=parseInt(m.score2);if(s1>s2&&m.odd1>2.5)f.push({title:`Value Bet V1 — ${m.home||'Dom.'}`,sev:'high'});if(s1<s2&&m.odd2>3.0)f.push({title:`Value Bet V2 — ${m.away||'Ext.'}`,sev:'high'});}const t=1/m.odd1+1/m.oddx+1/m.odd2;const mg=((t-1)*100).toFixed(1);if(parseFloat(mg)>8)f.push({title:`Marge ${mg}% — ${m.home||'?'} vs ${m.away||'?'}`,sev:'low'});});if(f.length)document.getElementById('failles-preview').innerHTML=f.slice(0,2).map(x=>`<div style="padding:7px 0;border-bottom:1px solid var(--border);font-size:13px;">${x.sev==='high'?'🔥':'📊'} <strong>${x
