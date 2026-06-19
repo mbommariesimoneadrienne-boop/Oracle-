@@ -391,3 +391,69 @@ main{padding:16px 16px 100px;}
   </div>
 </div>
 <script>
+let memory=JSON.parse(localStorage.getItem('oracle_memory')||'[]');
+let bets=JSON.parse(localStorage.getItem('oracle_bets')||'[]');
+let bankrollInit=parseFloat(localStorage.getItem('oracle_bankroll_init')||'0');
+let currentType='complet',currentMarket='1x2',currentBetFilter='all';
+let chatHistory=[],pendingImports=[],recognition=null,isListening=false,bookieCount=4;
+
+async function callAI(messages,system='',maxTokens=1000){
+  const body={model:"claude-sonnet-4-20250514",max_tokens:maxTokens,messages};
+  if(system)body.system=system;
+  const r=await fetch("/.netlify/functions/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error?.message||`HTTP ${r.status}`);}
+  const d=await r.json();
+  if(d.error)throw new Error(d.error.message||d.error);
+  return d.content?.map(c=>c.text||'').join('')||'';
+}
+
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+const synth=window.speechSynthesis;
+function toggleVoice(){if(isListening){stopListening();return;}if(!SR){alert('Utilise Chrome pour la voix.');return;}document.getElementById('voiceOverlay').classList.add('active');startListening();}
+function startListening(){const orb=document.getElementById('voiceOrb'),st=document.getElementById('voiceStatus'),tr=document.getElementById('voiceTranscript');recognition=new SR();recognition.lang='fr-FR';recognition.continuous=false;recognition.interimResults=true;isListening=true;orb.className='voice-orb listening';st.textContent='🎤 Je t\'écoute...';tr.textContent='Parle maintenant';document.getElementById('micBtn').classList.add('listening');recognition.onresult=e=>{const t=Array.from(e.results).map(r=>r[0].transcript).join('');tr.textContent=t;};recognition.onend=async()=>{isListening=false;document.getElementById('micBtn').classList.remove('listening');const t=tr.textContent;if(t&&t!=='Parle maintenant'){orb.className='voice-orb speaking';st.textContent='🧠 Oracle réfléchit...';await processVoiceMsg(t);}else closeVoice();};recognition.onerror=e=>{isListening=false;document.getElementById('micBtn').classList.remove('listening');st.textContent='❌ '+e.error;orb.className='voice-orb';setTimeout(closeVoice,2000);};recognition.start();}
+function stopListening(){isListening=false;if(recognition)recognition.stop();document.getElementById('micBtn').classList.remove('listening');closeVoice();}
+async function processVoiceMsg(t){const st=document.getElementById('voiceStatus'),tr=document.getElementById('voiceTranscript');appendMsg('user',t);chatHistory.push({role:'user',content:t});try{const r=await callAI(chatHistory.slice(-6),buildSystemPrompt(true),400);chatHistory.push({role:'assistant',content:r});appendMsg('ai',r);st.textContent='🔊 Oracle répond...';tr.textContent=r.substring(0,120)+'...';speakText(r,closeVoice);}catch(e){st.textContent='❌ '+e.message;setTimeout(closeVoice,3000);}}
+function speakText(t,cb){if(!synth){if(cb)cb();return;}synth.cancel();const c=t.replace(/\*\*/g,'').replace(/[#*_•═─━]/g,'').replace(/\n/g,' ');const u=new SpeechSynthesisUtterance(c.substring(0,500));u.lang='fr-FR';u.rate=1.05;const v=synth.getVoices().find(v=>v.lang.startsWith('fr'));if(v)u.voice=v;u.onend=()=>{if(cb)cb();};u.onerror=()=>{if(cb)cb();};synth.speak(u);}
+function closeVoice(){isListening=false;if(recognition){try{recognition.stop();}catch(e){}}if(synth)synth.cancel();document.getElementById('voiceOverlay').classList.remove('active');document.getElementById('micBtn').classList.remove('listening');document.getElementById('voiceOrb').className='voice-orb';}
+
+function buildSystemPrompt(short=false){
+  const ws=memory.filter(m=>m.score1!==''&&m.score2!=='');
+  const wo=memory.filter(m=>m.odd1&&m.oddx&&m.odd2);
+  const v1w=ws.filter(m=>parseInt(m.score1)>parseInt(m.score2)).length;
+  const v2w=ws.filter(m=>parseInt(m.score1)<parseInt(m.score2)).length;
+  const dr=ws.filter(m=>parseInt(m.score1)===parseInt(m.score2)).length;
+  const bkrl=calcCurrentBankroll();
+  const wonB=bets.filter(b=>b.status==='won'),lostB=bets.filter(b=>b.status==='lost');
+  const settled=bets.filter(b=>b.status!=='pending');
+  const roi=settled.length>0?((wonB.reduce((s,b)=>s+(b.odd-1)*b.stake,0)-lostB.reduce((s,b)=>s+b.stake,0))/(settled.reduce((s,b)=>s+b.stake,0)||1)*100).toFixed(1):'?';
+  let fCtx='';
+  if(wo.length>=2){const vb=[];wo.forEach(m=>{const t=1/m.odd1+1/m.oddx+1/m.odd2;const mg=((t-1)*100).toFixed(1);if(m.score1!==''&&m.score2!==''){const s1=parseInt(m.score1),s2=parseInt(m.score2);if(s1>s2&&m.odd1>2.5)vb.push(`Value Bet V1 ${m.home} cote ${m.odd1}`);if(s1<s2&&m.odd2>3.0)vb.push(`Value Bet V2 ${m.away} cote ${m.odd2}`);}if(parseFloat(mg)>8)vb.push(`Marge ${mg}% — ${m.home} vs ${m.away}`);});if(vb.length)fCtx='\nFAILLES:\n'+vb.slice(0,5).map(f=>`- ${f}`).join('\n');}
+  const mCtx=memory.length>0?`\nMÉMOIRE (${memory.length} matchs, ${ws.length} scorés):\n`+memory.slice(0,30).map(m=>`- ${m.home||'?'} vs ${m.away||'?'}${m.matchDate?' ('+m.matchDate+')':''} | ${m.score1!==''&&m.score2!==''?m.score1+'-'+m.score2:'?'} | V1=${m.odd1||'?'} X=${m.oddx||'?'} V2=${m.odd2||'?'}${m.comp?' '+m.comp:''}`).join('\n'):'\nMémoire vide.';
+  const sCtx=ws.length>0?`\nSTATS: ${v1w}V1(${Math.round(v1w/ws.length*100)}%) ${dr}X(${Math.round(dr/ws.length*100)}%) ${v2w}V2(${Math.round(v2w/ws.length*100)}%)`:'';
+  const bCtx=`\nBANKROLL: ${bkrl.toFixed(2)}€ (init:${bankrollInit}€) | ${bets.length} paris | ROI:${roi}% | ${wonB.length}W/${lostB.length}L`;
+  return `Tu es Oracle, expert IA paris sportifs. App ORACLE v5.\nRéponds TOUJOURS en français.${short?' MAX 2-3 phrases courtes.':''}\nSois direct, précis.\n\nFONCTIONNALITÉS: Dashboard, Mémoire, Analyse IA (1X2/BTTS/Over/Handicap/Combiné), Chat/Voix, Failles, Bankroll (Kelly/P&L), Comparateur bookmakers, Backup.\n\nTICKET FORMAT OBLIGATOIRE:\n🎫 TICKET ORACLE\n━━━━━━━━━━━━━━━━━━━━━\nMatch : [A vs B] | Date : [date]\n━━━━━━━━━━━━━━━━━━━━━\n📌 Sélection : [V1/X/V2/BTTS/+2.5]\n💰 Cote : [cote] | 🎯 Confiance : [X%]\n📊 Mise Kelly : [X% bankroll] → [X€]\n━━━━━━━━━━━━━━━━━━━━━\n💡 [Justification]\n⚠️ Risque : [Faible/Moyen/Élevé]\n━━━━━━━━━━━━━━━━━━━━━\nKELLY: f=(p*b-(1-p))/b, b=cote-1, p=proba\n${mCtx}${sCtx}${bCtx}${fCtx}`;
+}
+
+async function searchMissingScores(){
+  const missing=memory.filter(m=>(!m.score1||m.score1==='')&&(m.home||m.away)&&m.matchDate);
+  if(!missing.length){document.getElementById('score-search-results').innerHTML=`<div class="alert alert-green">✅ Tous les matchs ont un score !</div>`;return;}
+  const btn=document.getElementById('search-scores-btn');btn.textContent='⏳';btn.disabled=true;
+  const container=document.getElementById('score-search-results');
+  container.innerHTML=`<div style="font-size:12px;color:var(--muted);margin-bottom:8px;">Recherche ${Math.min(missing.length,10)} scores...</div>`+missing.slice(0,10).map((m,i)=>`<div class="score-item" id="si-${i}"><div>${m.home||'?'} vs ${m.away||'?'}<div style="font-size:11px;color:var(--muted);">${m.matchDate||''}</div></div><div class="score-searching" id="ss-${i}">🔍</div></div>`).join('');
+  const batch=missing.slice(0,10);
+  try{
+    const body={model:"claude-sonnet-4-20250514",max_tokens:1500,tools:[{type:"web_search_20250305",name:"web_search"}],messages:[{role:'user',content:`Cherche scores sur internet. JSON UNIQUEMENT:\n[{"index":0,"score1":"X","score2":"Y","found":true}]\nMatchs:\n${batch.map((m,i)=>`${i}. ${m.home||'?'} vs ${m.away||'?'} — ${m.matchDate||'?'} — ${m.comp||'?'}`).join('\n')}`}]};
+    const r2=await fetch("/.netlify/functions/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+    const d2=await r2.json();
+    const resp=d2.content?.filter(c=>c.type==='text').map(c=>c.text||'').join('')||'';
+    const clean=resp.replace(/```json|```/g,'').trim();
+    let results;try{results=JSON.parse(clean);}catch(e){const m=clean.match(/\[[\s\S]*\]/);results=m?JSON.parse(m[0]):[];}
+    if(!Array.isArray(results))results=[];
+    let found=0;
+    results.forEach(r=>{const el=document.getElementById(`ss-${r.index}`);if(r.found&&r.score1!==''&&r.score2!==''){found++;if(el)el.innerHTML=`<span class="score-found">${r.score1}-${r.score2}</span>`;const m=batch[r.index];if(m){const idx=memory.findIndex(x=>x.id===m.id);if(idx>=0){memory[idx].score1=String(r.score1);memory[idx].score2=String(r.score2);memory[idx].type='complet';}}}else{if(el)el.innerHTML=`<span style="color:var(--muted);font-size:11px;">Non trouvé</span>`;}});
+    saveMemory();renderDashboard();container.innerHTML+=`<div class="alert alert-green" style="margin-top:8px;">✅ ${found} score(s) trouvé(s) !</div>`;
+  }catch(err){container.innerHTML+=`<div class="alert alert-red" style="margin-top:8px;">❌ ${err.message}</div>`;}
+  btn.textContent='Chercher';btn.disabled=false;
+}
+
+function showScreen(name,btn){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));document.getElementById('screen-'+name).classList.add('active');if(btn)btn.classList.add('active');if(name==='memoire')renderMemory();if(name==='dashboard')renderDashboard();if(name==='bankroll'){renderBankroll();drawPnlChart();}if(name==='comparer')initBookies();}
