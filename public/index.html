@@ -490,14 +490,54 @@ function parseCSVContent(text){
   const lines=text.split(/\r\n|\r|\n/).filter(l=>l.trim().length>0);
   if(lines.length<2)return null;
   const sep=lines[0].includes(';')?';':(lines[0].includes('\t')?'\t':',');
-  const headers=lines[0].split(sep).map(h=>h.trim().toLowerCase().replace(/^"|"$/g,''));
+  const headers=lines[0].split(sep).map(h=>h.trim().toLowerCase().replace(/^"|"$/g,'').replace(/\s+/g,'_'));
   const matches=[];
   for(let i=1;i<lines.length;i++){
     const cols=lines[i].split(sep).map(c=>c.trim().replace(/^"|"$/g,''));
     if(cols.every(c=>!c))continue;
-    const get=keys=>{for(const k of keys){let idx=headers.indexOf(k);if(idx<0)idx=headers.findIndex(h=>h===k||h.startsWith(k+'_')||h.startsWith(k));if(idx>=0&&cols[idx]!==undefined&&cols[idx]!=='')return cols[idx];}return '';};
-    matches.push({home:get(['equipe1','equipe_1','home','team1','domicile']),away:get(['equipe2','equipe_2','away','team2','exterieur']),score1:get(['score1','score_1','but1']),score2:get(['score2','score_2','but2']),odd1:parseFloat(get(['cote_v1','cotev1','v1','cote1','odd1']))||null,oddx:parseFloat(get(['cote_x','cotex','x','cotenul','oddx']))||null,odd2:parseFloat(get(['cote_v2','cotev2','v2','cote2','odd2']))||null,comp:get(['competition','comp']),matchDate:get(['date_match','matchdate','date']),notes:get(['notes','note'])});
+    const get=keys=>{
+      for(const k of keys){
+        let idx=headers.indexOf(k);
+        if(idx>=0&&cols[idx]!==undefined&&cols[idx]!=='')return cols[idx];
+        idx=headers.findIndex(h=>h.includes(k)||k.includes(h));
+        if(idx>=0&&cols[idx]!==undefined&&cols[idx]!=='')return cols[idx];
+      }
+      return '';
+    };
+    matches.push({
+      home:get(['equipe1','equipe_1','home','team1','domicile','equipe_domicile','home_team','local','team_home','equipe_home','club1']),
+      away:get(['equipe2','equipe_2','away','team2','exterieur','equipe_exterieur','away_team','visiteur','team_away','equipe_away','club2']),
+      score1:get(['score1','score_1','but1','buts1','goal1','score_domicile','score_home','resultat_domicile','but_domicile','score_v1','s1']),
+      score2:get(['score2','score_2','but2','buts2','goal2','score_exterieur','score_away','resultat_exterieur','but_exterieur','score_v2','s2']),
+      odd1:parseFloat(get(['cote_v1','cotev1','v1','cote1','odd1','odds1','cote_domicile','cote_home','odd_v1','o1']))||null,
+      oddx:parseFloat(get(['cote_x','cotex','x','cotenul','oddx','oddsdraw','cote_nul','draw','nul','odd_x']))||null,
+      odd2:parseFloat(get(['cote_v2','cotev2','v2','cote2','odd2','odds2','cote_exterieur','cote_away','odd_v2','o2']))||null,
+      comp:get(['competition','comp','ligue','league','championnat','tournament','tournoi']),
+      matchDate:get(['date_match','matchdate','date','date_jeu','jour','match_date','kickoff']),
+      notes:get(['notes','note','commentaire','info','snapshot','variation'])
+    });
   }
+  return matches.filter(m=>m.home||m.away||m.odd1||m.oddx||m.odd2);
+  }
+
+
+      return '';
+    };
+    matches.push({
+      home:get(['equipe1','equipe_1','home','team1','domicile','equipe_domicile','home_team','local','team_home','equipe_home','club1']),
+      away:get(['equipe2','equipe_2','away','team2','exterieur','equipe_exterieur','away_team','visiteur','team_away','equipe_away','club2']),
+      score1:get(['score1','score_1','but1','buts1','goal1','score_domicile','score_home','resultat_domicile','but_domicile','score_v1','s1']),
+      score2:get(['score2','score_2','but2','buts2','goal2','score_exterieur','score_away','resultat_exterieur','but_exterieur','score_v2','s2']),
+      odd1:parseFloat(get(['cote_v1','cotev1','v1','cote1','odd1','odds1','cote_domicile','cote_home','odd_v1','o1']))||null,
+      oddx:parseFloat(get(['cote_x','cotex','x','cotenul','oddx','oddsdraw','cote_nul','draw','nul','odd_x']))||null,
+      odd2:parseFloat(get(['cote_v2','cotev2','v2','cote2','odd2','odds2','cote_exterieur','cote_away','odd_v2','o2']))||null,
+      comp:get(['competition','comp','ligue','league','championnat','tournament','tournoi']),
+      matchDate:get(['date_match','matchdate','date','date_jeu','jour','match_date','kickoff']),
+      notes:get(['notes','note','commentaire','info','snapshot','variation'])
+    });
+  }
+  return matches.filter(m=>m.home||m.away||m.odd1||m.oddx||m.odd2);
+      }
   return matches.filter(m=>m.home||m.away||m.odd1||m.oddx||m.odd2);
 }
 
